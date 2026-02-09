@@ -1,8 +1,8 @@
 import styles from "./App.module.css";
-import { useEditContext } from "./useEditContext";
+import { useEditContext } from "./hooks/useEditContext";
 
 function App() {
-	const ref = useEditContext("Hello World");
+	const ref = useEditContext();
 
 	return (
 		<div>

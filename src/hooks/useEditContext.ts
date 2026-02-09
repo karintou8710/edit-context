@@ -1,11 +1,14 @@
 import { useEffect, useRef } from "react";
-import { clearImeHighlight, updateImeHighlight } from "./editContext/highlight";
-import { render } from "./editContext/render";
-import { getOffsetFromSelection } from "./editContext/selection";
+import {
+	clearImeHighlight,
+	updateImeHighlight,
+} from "../editContext/highlight";
+import { render } from "../editContext/render";
+import { getOffsetFromSelection } from "../editContext/selection";
 
 const HIGHLIGHT_NAME = "IME_UNDERLINE";
 
-export function useEditContext(initialText: string = "") {
+export function useEditContext() {
 	const ref = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
@@ -13,7 +16,7 @@ export function useEditContext(initialText: string = "") {
 		if (!el) return;
 
 		const editContext = new EditContext({
-			text: initialText || el.textContent || "",
+			text: el.textContent ?? "",
 		});
 
 		el.editContext = editContext;
@@ -100,7 +103,7 @@ export function useEditContext(initialText: string = "") {
 			document.removeEventListener("selectionchange", handleSelectionChange);
 			el.editContext = null;
 		};
-	}, [initialText]);
+	}, []);
 
 	return ref;
 }
