@@ -25,11 +25,11 @@ export function useEditContext(initialText: string = "") {
 		// Handle text updates
 		const handleTextUpdate = (event: TextUpdateEvent) => {
 			const sel = window.getSelection();
-			renderTextWithBr(el, editContext.text);
 			if (!sel) return;
 
 			const start = event.selectionStart;
-			const end = event.selectionEnd ?? event.selectionStart;
+			const end = event.selectionEnd;
+			renderTextWithBr(el, editContext.text);
 			setDomSelection(el, start, end, sel);
 		};
 
@@ -78,13 +78,16 @@ export function useEditContext(initialText: string = "") {
 		};
 
 		const handleKeyDown = (event: KeyboardEvent) => {
+			if (event.keyCode === 229) {
+				return;
+			}
+
 			if (event.key === "Enter") {
 				event.preventDefault();
 				insertTextAtSelection("\n");
 			}
 		};
 
-		// Add event listeners
 		editContext.addEventListener("textupdate", handleTextUpdate);
 		editContext.addEventListener("textformatupdate", handleTextFormatUpdate);
 		editContext.addEventListener(
@@ -94,7 +97,6 @@ export function useEditContext(initialText: string = "") {
 		el.addEventListener("keydown", handleKeyDown);
 		document.addEventListener("selectionchange", handleSelectionChange);
 
-		// Cleanup
 		return () => {
 			editContext.removeEventListener("textupdate", handleTextUpdate);
 			editContext.removeEventListener(
