@@ -1,7 +1,9 @@
 import { useEffect, useRef } from "react";
-import { renderTextWithBr } from "./editContext/render";
 import { clearImeHighlight, updateImeHighlight } from "./editContext/highlight";
-import { getOffsetFromSelection, setDomSelection } from "./editContext/selection";
+import { render } from "./editContext/render";
+import { getOffsetFromSelection } from "./editContext/selection";
+
+const HIGHLIGHT_NAME = "IME_UNDERLINE";
 
 export function useEditContext(initialText: string = "") {
 	const ref = useRef<HTMLDivElement>(null);
@@ -15,7 +17,16 @@ export function useEditContext(initialText: string = "") {
 		});
 
 		el.editContext = editContext;
-		const highlightName = "ime-underline";
+
+		const updateContextSelection = (start: number, end: number) => {
+			const sel = document?.getSelection();
+			if (!sel) return;
+
+			editContext.updateSelection(start, end);
+			editContext.updateSelectionBounds(
+				sel.getRangeAt(0).getBoundingClientRect(),
+			);
+		};
 
 		// Update control bounds
 		const controlBound = el.getBoundingClientRect();
@@ -23,23 +34,14 @@ export function useEditContext(initialText: string = "") {
 
 		// Handle text updates
 		const handleTextUpdate = (event: TextUpdateEvent) => {
-			const sel = window.getSelection();
-			if (!sel) return;
-
 			const start = event.selectionStart;
 			const end = event.selectionEnd ?? event.selectionStart;
-			renderTextWithBr(el, editContext.text);
-			setDomSelection(el, start, end, sel);
+			render(el, editContext.text, start, end);
 		};
 
 		// Handle text format updates
 		const handleTextFormatUpdate = (event: TextFormatUpdateEvent) => {
-			updateImeHighlight(el, event.getTextFormats(), highlightName);
-		};
-
-		// Handle character bounds updates
-		const handleCharacterBoundsUpdate = (event: CharacterBoundsUpdateEvent) => {
-			console.log("characterboundsupdate", event);
+			updateImeHighlight(el, event.getTextFormats(), HIGHLIGHT_NAME);
 		};
 
 		// Handle selection changes
@@ -59,24 +61,20 @@ export function useEditContext(initialText: string = "") {
 				range.endOffset,
 			);
 
-			editContext.updateSelection(start, end);
-			editContext.updateSelectionBounds(range.getBoundingClientRect());
+			updateContextSelection(start, end);
 		};
 
 		const insertTextAtSelection = (text: string) => {
 			const start = editContext.selectionStart;
 			const end = editContext.selectionEnd;
-			editContext.updateText(start, end, text);
-			renderTextWithBr(el, editContext.text);
 			const next = start + text.length;
-			editContext.updateSelection(next, next);
-			const sel = window.getSelection();
-			if (sel) {
-				setDomSelection(el, next, next, sel);
-			}
+
+			editContext.updateText(start, end, text);
+			render(el, editContext.text, next, next);
 		};
 
 		const handleKeyDown = (event: KeyboardEvent) => {
+			// IME 入力中には
 			if (event.keyCode === 229) {
 				return;
 			}
@@ -88,23 +86,15 @@ export function useEditContext(initialText: string = "") {
 
 		editContext.addEventListener("textupdate", handleTextUpdate);
 		editContext.addEventListener("textformatupdate", handleTextFormatUpdate);
-		editContext.addEventListener(
-			"characterboundsupdate",
-			handleCharacterBoundsUpdate,
-		);
 		el.addEventListener("keydown", handleKeyDown);
 		document.addEventListener("selectionchange", handleSelectionChange);
 
 		return () => {
-			clearImeHighlight(highlightName);
+			clearImeHighlight(HIGHLIGHT_NAME);
 			editContext.removeEventListener("textupdate", handleTextUpdate);
 			editContext.removeEventListener(
 				"textformatupdate",
 				handleTextFormatUpdate,
-			);
-			editContext.removeEventListener(
-				"characterboundsupdate",
-				handleCharacterBoundsUpdate,
 			);
 			el.removeEventListener("keydown", handleKeyDown);
 			document.removeEventListener("selectionchange", handleSelectionChange);

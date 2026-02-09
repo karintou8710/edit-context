@@ -6,7 +6,7 @@
   white-space: pre;
 }
 
-.editor::highlight(ime-underline) {
+.editor::highlight(IME_UNDERLINE) {
   text-decoration-line: underline;
   text-decoration-style: solid;
   text-decoration-thickness: 2px;

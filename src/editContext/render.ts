@@ -1,4 +1,11 @@
-export const renderTextWithBr = (el: HTMLElement, text: string) => {
+import { setDomSelection } from "./selection";
+
+export const render = (
+	el: HTMLElement,
+	text: string,
+	start: number,
+	end: number,
+) => {
 	while (el.firstChild) el.removeChild(el.firstChild);
 
 	const parts = text.split("\n");
@@ -15,5 +22,10 @@ export const renderTextWithBr = (el: HTMLElement, text: string) => {
 		const extra = document.createElement("br");
 		extra.dataset.extra = "true";
 		el.appendChild(extra);
+	}
+
+	const selection = window.getSelection();
+	if (selection) {
+		setDomSelection(el, start, end, selection);
 	}
 };
