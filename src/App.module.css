@@ -2,6 +2,6 @@
   margin: 10rem auto;
   padding: 1rem;
   max-width: 800px;
-  white-space: pre-wrap;
   border: 1px solid #ccc;
+  white-space: pre;
 }

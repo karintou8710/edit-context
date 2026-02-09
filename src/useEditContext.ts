@@ -1,4 +1,9 @@
 import { useEffect, useRef } from "react";
+import { renderTextWithBr } from "./editContext/render";
+import {
+	getOffsetFromSelection,
+	setDomSelection,
+} from "./editContext/selection";
 
 export function useEditContext(initialText: string = "") {
 	const ref = useRef<HTMLDivElement>(null);
@@ -20,8 +25,12 @@ export function useEditContext(initialText: string = "") {
 		// Handle text updates
 		const handleTextUpdate = (event: TextUpdateEvent) => {
 			const sel = window.getSelection();
-			el.textContent = editContext.text;
-			sel?.collapse(el.firstChild, event.selectionStart);
+			renderTextWithBr(el, editContext.text);
+			if (!sel) return;
+
+			const start = event.selectionStart;
+			const end = event.selectionEnd ?? event.selectionStart;
+			setDomSelection(el, start, end, sel);
 		};
 
 		// Handle text format updates
@@ -39,13 +48,40 @@ export function useEditContext(initialText: string = "") {
 			const selection = window.getSelection();
 			if (!selection || selection.rangeCount === 0) return;
 
-			editContext.updateSelection(
-				selection.anchorOffset,
-				selection.focusOffset,
+			const range = selection.getRangeAt(0);
+			const start = getOffsetFromSelection(
+				el,
+				range.startContainer,
+				range.startOffset,
 			);
-			editContext.updateSelectionBounds(
-				selection.getRangeAt(0).getBoundingClientRect(),
+			const end = getOffsetFromSelection(
+				el,
+				range.endContainer,
+				range.endOffset,
 			);
+
+			editContext.updateSelection(start, end);
+			editContext.updateSelectionBounds(range.getBoundingClientRect());
+		};
+
+		const insertTextAtSelection = (text: string) => {
+			const start = editContext.selectionStart;
+			const end = editContext.selectionEnd;
+			editContext.updateText(start, end, text);
+			renderTextWithBr(el, editContext.text);
+			const next = start + text.length;
+			editContext.updateSelection(next, next);
+			const sel = window.getSelection();
+			if (sel) {
+				setDomSelection(el, next, next, sel);
+			}
+		};
+
+		const handleKeyDown = (event: KeyboardEvent) => {
+			if (event.key === "Enter") {
+				event.preventDefault();
+				insertTextAtSelection("\n");
+			}
 		};
 
 		// Add event listeners
@@ -55,6 +91,7 @@ export function useEditContext(initialText: string = "") {
 			"characterboundsupdate",
 			handleCharacterBoundsUpdate,
 		);
+		el.addEventListener("keydown", handleKeyDown);
 		document.addEventListener("selectionchange", handleSelectionChange);
 
 		// Cleanup
@@ -68,6 +105,7 @@ export function useEditContext(initialText: string = "") {
 				"characterboundsupdate",
 				handleCharacterBoundsUpdate,
 			);
+			el.removeEventListener("keydown", handleKeyDown);
 			document.removeEventListener("selectionchange", handleSelectionChange);
 			el.editContext = null;
 		};
