@@ -68,3 +68,20 @@ interface CharacterBoundsUpdateEvent extends Event {
 interface HTMLElement {
   editContext?: EditContext | null;
 }
+
+interface HighlightRegistry {
+  set(name: string, highlight: Highlight): void;
+  delete(name: string): void;
+}
+
+interface Highlight extends Set<Range> {}
+
+interface HighlightConstructor {
+  new (...ranges: Range[]): Highlight;
+}
+
+declare const Highlight: HighlightConstructor;
+
+interface CSS {
+  readonly highlights: HighlightRegistry;
+}

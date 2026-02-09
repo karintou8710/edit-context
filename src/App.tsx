@@ -6,7 +6,7 @@ function App() {
 
 	return (
 		<div>
-			<div className={styles.editor} ref={ref}>
+			<div className={styles.editor} ref={ref} spellCheck="false">
 				Hello World
 			</div>
 		</div>

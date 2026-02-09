@@ -1,9 +1,7 @@
 import { useEffect, useRef } from "react";
 import { renderTextWithBr } from "./editContext/render";
-import {
-	getOffsetFromSelection,
-	setDomSelection,
-} from "./editContext/selection";
+import { clearImeHighlight, updateImeHighlight } from "./editContext/highlight";
+import { getOffsetFromSelection, setDomSelection } from "./editContext/selection";
 
 export function useEditContext(initialText: string = "") {
 	const ref = useRef<HTMLDivElement>(null);
@@ -17,6 +15,7 @@ export function useEditContext(initialText: string = "") {
 		});
 
 		el.editContext = editContext;
+		const highlightName = "ime-underline";
 
 		// Update control bounds
 		const controlBound = el.getBoundingClientRect();
@@ -28,14 +27,14 @@ export function useEditContext(initialText: string = "") {
 			if (!sel) return;
 
 			const start = event.selectionStart;
-			const end = event.selectionEnd;
+			const end = event.selectionEnd ?? event.selectionStart;
 			renderTextWithBr(el, editContext.text);
 			setDomSelection(el, start, end, sel);
 		};
 
 		// Handle text format updates
 		const handleTextFormatUpdate = (event: TextFormatUpdateEvent) => {
-			console.log("textformatupdate", event);
+			updateImeHighlight(el, event.getTextFormats(), highlightName);
 		};
 
 		// Handle character bounds updates
@@ -83,7 +82,6 @@ export function useEditContext(initialText: string = "") {
 			}
 
 			if (event.key === "Enter") {
-				event.preventDefault();
 				insertTextAtSelection("\n");
 			}
 		};
@@ -98,6 +96,7 @@ export function useEditContext(initialText: string = "") {
 		document.addEventListener("selectionchange", handleSelectionChange);
 
 		return () => {
+			clearImeHighlight(highlightName);
 			editContext.removeEventListener("textupdate", handleTextUpdate);
 			editContext.removeEventListener(
 				"textformatupdate",

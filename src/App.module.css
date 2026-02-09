@@ -5,3 +5,10 @@
   border: 1px solid #ccc;
   white-space: pre;
 }
+
+.editor::highlight(ime-underline) {
+  text-decoration-line: underline;
+  text-decoration-style: solid;
+  text-decoration-thickness: 2px;
+  text-decoration-color: #000;
+}
